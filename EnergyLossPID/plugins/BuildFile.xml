@@ -1,0 +1,4 @@
+<use name="UserCode/EnergyLossPID"/>
+<library file="*.cc" name="UserCodeEnergyLossPIDPlugins">
+ <flags EDM_PLUGIN="1"/>
+</library>
