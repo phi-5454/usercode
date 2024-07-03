@@ -1,7 +1,7 @@
 #ifndef EnergyLossProducer_H
 #define EnergyLossProducer_H
 
-#include "FWCore/Framework/interface/one/EDProducer.h"
+#include "FWCore/Framework/interface/EDProducer.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
@@ -18,7 +18,7 @@ class DataHandler;
 class HadronClusters;
 class TTrack;
 
-class EnergyLossProducer : public edm::one::EDProducer<>
+class EnergyLossProducer : public edm::EDProducer
 {
 public:
   explicit EnergyLossProducer(const edm::ParameterSet& ps);

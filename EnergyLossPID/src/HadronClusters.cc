@@ -15,15 +15,15 @@
 #include "Geometry/CommonDetUnit/interface/GeomDetType.h"
 //#include "Geometry/CommonDetUnit/interface/GeomDetUnit.h"
 
-#include "Geometry/CommonTopologies/interface/PixelGeomDetUnit.h"
+#include "Geometry/TrackerGeometryBuilder/interface/PixelGeomDetUnit.h"
 #include "Geometry/TrackerGeometryBuilder/interface/StripGeomDetUnit.h"
 
 #include "Geometry/TrackerGeometryBuilder/interface/RectangularPixelTopology.h"
 #include "Geometry/CommonTopologies/interface/StripTopology.h"
 
-#include "RecoTracker/PixelLowPtUtilities/interface/ClusterShape.h"
-#include "RecoTracker/PixelLowPtUtilities/interface/ClusterData.h"
-#include "RecoTracker/PixelLowPtUtilities/interface/ClusterShapeHitFilter.h"
+#include "RecoPixelVertexing/PixelLowPtUtilities/interface/ClusterShape.h"
+#include "RecoPixelVertexing/PixelLowPtUtilities/interface/ClusterData.h"
+#include "RecoPixelVertexing/PixelLowPtUtilities/interface/ClusterShapeHitFilter.h"
 
 #include "TrackingTools/PatternTools/interface/Trajectory.h"
 

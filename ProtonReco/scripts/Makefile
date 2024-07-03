@@ -1,0 +1,2 @@
+all :
+	cmsRun reco.py
