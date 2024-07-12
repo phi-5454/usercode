@@ -1,0 +1,8 @@
+executable            = run_reco.sh
+arguments             = $(input_dir) ../intermediate/$(input_dir)  $(ClusterId) $(ProcId)
+output                = ../output/$(input_dir).out
+error                 = ../error/$(input_dir).err
+log                   = ../log/$(input_dir)_condor.log
+requirements = (OpSysAndVer =?= "CentOS7")
+RequestCpus = 1
+queue input_dir from ../TestFs.txt

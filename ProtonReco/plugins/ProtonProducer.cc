@@ -2,23 +2,26 @@
 
 #include "FWCore/ParameterSet/interface/FileInPath.h"
 
+#include "FWCore/Framework/interface/ESHandle.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/EventSetup.h"
-#include "FWCore/Framework/interface/ESHandle.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
 //
-#include "DataFormats/FWLite/interface/Handle.h"
 #include "DataFormats/FWLite/interface/ChainEvent.h"
+#include "DataFormats/FWLite/interface/Handle.h"
 
 //
 #include "DataFormats/CTPPSDetId/interface/TotemRPDetId.h"
-#include "DataFormats/CTPPSReco/interface/TotemRPRecHit.h"
 #include "DataFormats/CTPPSReco/interface/TotemRPCluster.h"
+#include "DataFormats/CTPPSReco/interface/TotemRPRecHit.h"
+
+// For exprting products. TODO: Replace with more complete descriptor
+#include "DataFormats/CTPPSReco/interface/CTPPSLocalTrackLite.h"
 
 //
-#include "../interface/Structures.h"
 #include "../interface/RpReco.h"
+#include "../interface/Structures.h"
 
 //
 using namespace std;
@@ -26,17 +29,16 @@ using namespace std;
 #define DebugOutput
 
 /*****************************************************************************/
-ProtonProducer::ProtonProducer(const edm::ParameterSet& ps) : pset(ps)
-{
-  cerr << "\033[22;31m" << "Getting parameters.."
-       << "\033[22;0m"  << endl;
+ProtonProducer::ProtonProducer(const edm::ParameterSet &ps) : pset(ps) {
+  cerr << "\033[22;31m" << "Getting parameters.." << "\033[22;0m" << endl;
 
   totemRpClusters_ = consumes<edm::DetSetVector<TotemRPCluster>>(
-                     ps.getParameter<edm::InputTag>("totemRpClusters"));
+      ps.getParameter<edm::InputTag>("totemRpClusters"));
 
-  localTracks_  = consumes<edm::DetSetVector<TotemRPLocalTrack>>(
-                  ps.getParameter<edm::InputTag>("localTracks"));
+  localTracks_ = consumes<edm::DetSetVector<TotemRPLocalTrack>>(
+      ps.getParameter<edm::InputTag>("localTracks"));
 
+  // produces<vector<RpTrack>>("one");
   outFile = ps.getParameter<string>("outFile");
 
   //
@@ -44,129 +46,194 @@ ProtonProducer::ProtonProducer(const edm::ParameterSet& ps) : pset(ps)
 }
 
 /*****************************************************************************/
-ProtonProducer::~ProtonProducer()
-{
-}
+ProtonProducer::~ProtonProducer() {}
 
 /*****************************************************************************/
-void ProtonProducer::beginJob()
-{
-#ifdef DebugOutput
-  file.open(outFile.c_str());
-#endif
-}
+void ProtonProducer::beginJob() {
+  baseName = gSystem->BaseName(outFile.c_str());
+  dirName = gSystem->DirName(outFile.c_str());
+  // fOut = TFile::Open(dirName + "/" + baseName, "RECREATE");
+  fOut = TFile::Open(outFile.c_str(), "RECREATE");
+  fOut->cd();
 
-/*****************************************************************************/
-void ProtonProducer::endJob()
-{
-#ifdef DebugOutput
-  file.close();
-#endif
-}
+  prTrks_out = vector<PrTrack>(2);
 
-/*****************************************************************************/
-void ProtonProducer::beginRun(edm::Run const & run, edm::EventSetup const & es)
-{
-}
+  // BOOK OUTPUT TREE
+  outT = new TTree("tree", "tree");
 
-/*****************************************************************************/
-vector<PrTrack> ProtonProducer::processRpTracks(const edm::Event & ev)
-{
-  edm::Handle<edm::DetSetVector<TotemRPCluster> > stripClusters;
-  ev.getByToken(                totemRpClusters_, stripClusters);
+  /*
+      file << " " << prTracks[i].p.x // momentum components
+           << " " << prTracks[i].p.y << " " << prTracks[i].p.z << " "
+           << prTracks[i].pt.cxx // covariances of px and py
+           << " " << prTracks[i].pt.cxy << " " << prTracks[i].pt.cyy << " "
+           << prTracks[i].pos.x // transverse location at IP
+           << " " << prTracks[i].pos.y;
+   */
 
-  edm::Handle<edm::DetSetVector<TotemRPLocalTrack>> localTracks;
-  ev.getByToken(                      localTracks_, localTracks);
+  // Bind to tree variables
+  // Event info
+  outT->Branch("Run", &run_id, "Run/i");
+  outT->Branch("EventNum", &event_id, "EventNum/l");
+
+  /*
+  // (IP) Momentum
+  outT->Branch("pr_px_a", &prTrks_out[0].p.x, "pr_px_a/F");
+  outT->Branch("pr_px_b", &prTrks_out[1].p.x, "pr_px_b/F");
+
+  outT->Branch("pr_py_a", &prTrks_out[0].p.y, "pr_py_a/F");
+  outT->Branch("pr_py_b", &prTrks_out[1].p.y, "pr_py_b/F");
+
+  outT->Branch("pr_pz_a", &prTrks_out[0].p.z, "pr_pz_a/F");
+  outT->Branch("pr_pz_b", &prTrks_out[1].p.z, "pr_pz_b/F");
+  // No covariance values found for Vector3
+*/
+
+  // (IP) Transverse momentum
+  outT->Branch("pr_ptx_a", &prTrks_out[0].pt.x, "pr_ptx_a/F");
+  outT->Branch("pr_ptx_b", &prTrks_out[1].pt.x, "pr_ptx_b/F");
+
+  outT->Branch("pr_pty_a", &prTrks_out[0].pt.y, "pr_pty_a/F");
+  outT->Branch("pr_pty_b", &prTrks_out[1].pt.y, "pr_pty_b/F");
+
+  // Errors in transverse momentum
+  outT->Branch("pr_ptx_sigma_a", &prTrks_out[0].pt.cxx, "pr_ptx_sigma_a/F");
+  outT->Branch("pr_ptx_sigma_b", &prTrks_out[1].pt.cxx, "pr_ptx_sigma_b/F");
+
+  outT->Branch("pr_pty_sigma_a", &prTrks_out[0].pt.cyy, "pr_pty_sigma_a/F");
+  outT->Branch("pr_pty_sigma_b", &prTrks_out[1].pt.cyy, "pr_pty_sigma_b/F");
+
+  // (IP) Positions
+  outT->Branch("pr_posx_a", &prTrks_out[0].pos.x, "pr_posx_a/F");
+  outT->Branch("pr_posx_b", &prTrks_out[1].pos.x, "pr_posx_b/F");
+
+  outT->Branch("pr_posy_a", &prTrks_out[0].pos.y, "pr_posy_a/F");
+  outT->Branch("pr_posy_b", &prTrks_out[1].pos.y, "pr_posy_b/F");
+
+  // Errors in position (IP)
+  outT->Branch("pr_posx_sigma_a", &prTrks_out[0].pos.cxx, "pr_posx_sigma_a/F");
+  outT->Branch("pr_posx_sigma_b", &prTrks_out[1].pos.cxx, "pr_posx_sigma_b/F");
+
+  outT->Branch("pr_posy_sigma_a", &prTrks_out[0].pos.cyy, "pr_posy_sigma_a/F");
+  outT->Branch("pr_posy_sigma_b", &prTrks_out[1].pos.cyy, "pr_posy_sigma_b/F");
 
   //
-/*
-  for(auto & tracks : *localTracks)
-  {
-    TotemRPDetId detId(tracks.detId());
 
-    if(detId.station() == 0 ||
-       detId.station() == 2)
+#ifdef DebugOutput
+  // file.open(outFile.c_str());
+#endif
+}
+
+/*****************************************************************************/
+void ProtonProducer::endJob() {
+  // save histos to file
+  std::cout << endl
+            << "Writes " << fOut->GetName() << " with " << outT->GetEntries()
+            << " events." << endl;
+  fOut->cd();
+  outT->Write();
+
+  fOut->Close();
+#ifdef DebugOutput
+  // file.close();
+#endif
+}
+
+/*****************************************************************************/
+void ProtonProducer::beginRun(edm::Run const &run, edm::EventSetup const &es) {}
+
+/*****************************************************************************/
+vector<PrTrack> ProtonProducer::processRpTracks(const edm::Event &ev) {
+  edm::Handle<edm::DetSetVector<TotemRPCluster>> stripClusters;
+  ev.getByToken(totemRpClusters_, stripClusters);
+
+  edm::Handle<edm::DetSetVector<TotemRPLocalTrack>> localTracks;
+  ev.getByToken(localTracks_, localTracks);
+
+  //
+  /*
+    for(auto & tracks : *localTracks)
     {
-      file << " " << detId.arm()
-           << " " << detId.station()
-           << " " << detId.rp();
+      TotemRPDetId detId(tracks.detId());
 
-      for(auto & track : tracks)
+      if(detId.station() == 0 ||
+         detId.station() == 2)
       {
-        vector<double> center(10,-1);
+        file << " " << detId.arm()
+             << " " << detId.station()
+             << " " << detId.rp();
 
-        for(auto & recHits : track.getHits())
-        for(auto & recHit : recHits)
+        for(auto & track : tracks)
         {
-          TotemRPDetId detId(recHits.detId());
-          const TotemRPCluster & cluster = recHit.getCluster();
+          vector<double> center(10,-1);
 
-          center[detId.plane()] = cluster.getCenterStripPosition();
+          for(auto & recHits : track.getHits())
+          for(auto & recHit : recHits)
+          {
+            TotemRPDetId detId(recHits.detId());
+            const TotemRPCluster & cluster = recHit.getCluster();
+
+            center[detId.plane()] = cluster.getCenterStripPosition();
+          }
+
+          for(auto & c : center)
+            file << " " << c;
+          file << endl;
         }
-
-        for(auto & c : center)
-          file << " " << c;
-        file << endl;
       }
     }
-  }
-*/
+  */
 
   //
   Event event;
 
   // roman pot tracks
-  for(auto & tracks : *localTracks)
-  {
+  for (auto &tracks : *localTracks) {
     TotemRPDetId detId(tracks.detId());
 
-    if(detId.station() == 0 ||
-       detId.station() == 2)
-    {
+    if (detId.station() == 0 || detId.station() == 2) {
       RpTrack rpTrack;
-      RpDet   & det = rpTrack.det;
-//    Vector2 & pos = rpTrack.pos;
+      RpDet &det = rpTrack.det;
+      //    Vector2 & pos = rpTrack.pos;
 
       det.arm = detId.arm();
       det.sta = detId.station();
       det.rpt = detId.rp();
 
-      bool ok = (det.sta == 0 || det.sta == 2) ||
-                (det.rpt == 4 || det.rpt == 5);
+      bool ok =
+          (det.sta == 0 || det.sta == 2) || (det.rpt == 4 || det.rpt == 5);
 
       det.sta /= 2; // 0 2 -> 0 1
       det.rpt %= 4; // 4 5 -> 0 1
 
-      for(auto & track : tracks)
-      {
-        vector<double> center(10,-1);
+      for (auto &track : tracks) {
+        vector<double> center(10, -1);
 
-        for(auto & recHits : track.getHits())
-        for(auto & recHit : recHits)
-        {
-          TotemRPDetId detId(recHits.detId());
-          const TotemRPCluster & cluster = recHit.getCluster();
+        for (auto &recHits : track.getHits())
+          for (auto &recHit : recHits) {
+            TotemRPDetId detId(recHits.detId());
+            const TotemRPCluster &cluster = recHit.getCluster();
 
-          center[detId.plane()] = cluster.getCenterStripPosition();
-        }
+            center[detId.plane()] = cluster.getCenterStripPosition();
+          }
 
         int c = 0;
-        for(short int pla = 0; pla < nPlanes; pla++)
-        for(short int uv = 0; uv < 2; uv++)
-        {
-          double strip = center[c++];
+        for (short int pla = 0; pla < nPlanes; pla++)
+          for (short int uv = 0; uv < 2; uv++) {
+            double strip = center[c++];
 
-          if(det.print() == "0|0|0" && uv == 0 && pla == 2)
-            strip = -1;
+            if (det.print() == "0|0|0" && uv == 0 && pla == 2)
+              strip = -1;
 
-          if(strip == -1) strip = Empty; // -1 -> -99
+            if (strip == -1)
+              strip = Empty; // -1 -> -99
 
-          rpTrack.clus[uv][pla] = strip;
-        }
+            rpTrack.clus[uv][pla] = strip;
+          }
       }
 
       //
-      if(ok) event.rpTracks.push_back(rpTrack);
+      if (ok)
+        event.rpTracks.push_back(rpTrack);
     }
   }
 
@@ -174,8 +241,7 @@ vector<PrTrack> ProtonProducer::processRpTracks(const edm::Event & ev)
   vector<PrTrack> prTracks;
 
   // need exactly four tracklets, proper topology
-  if(theRpReco->getTopo(event.rpTracks, event.topo))
-  {
+  if (theRpReco->getTopo(event.rpTracks, event.topo)) {
     theRpReco->reconstruct(event);
 
     prTracks = event.prTracks;
@@ -185,30 +251,60 @@ vector<PrTrack> ProtonProducer::processRpTracks(const edm::Event & ev)
 }
 
 /*****************************************************************************/
-void ProtonProducer::produce(edm::Event& ev, const edm::EventSetup& es)
-{
+void ProtonProducer::produce(edm::Event &ev, const edm::EventSetup &es) {
   vector<PrTrack> prTracks = processRpTracks(ev);
+  // auto op = CTPPSLocalTrackLite(prTrackL.);
+
+  auto outputPrs = std::make_unique<std::vector<PrTrack>>();
+  for (auto &&pr : prTracks) {
+    auto pt = sqrt(pr.pt.x * pr.pt.x + pr.pt.y * pr.pt.y);
+    // TODO: Rigor. Uncertainty likely doesn't transform as euclidean distance
+    // does
+    auto ptu = sqrt(pr.pt.cxx * pr.pt.cxx + pr.pt.cyy * pr.pt.cyy);
+
+    // Use covariances for uncertainties
+    // outputPrs->push_back(CTPPSLocalTrackLite(-1, pr.pos.x, pr.pos.cxx,
+    // pr.pos.y, pr.pos.cyy, pt, ptu));
+    outputPrs->push_back(pr);
+  }
+
+  // write out protons
+  if (prTracks.size() > 0) {
+    event_id = ev.id().event();
+    run_id = ev.id().run();
+    prTrks_out = prTracks;
+    // Save output tree
+    outT->Fill();
+  }
 
   // FOR NOW, WRITING OUT RECONSTRUCTED PROTON KINEMATICS TO out.dat.gz
+  // std::cerr << "SMTH";
 
+  /*
 #ifdef DebugOutput
-  if(prTracks.size() > 0)
-  { // write out protons
-    for(int i = 0; i < 2; i ++)
+      if (prTracks.size() > 0) { // write out protons
+    for (int i = 0; i < 2; i++) {
       file << " " << prTracks[i].p.x // momentum components
-           << " " << prTracks[i].p.y
-           << " " << prTracks[i].p.z
-           << " " << prTracks[i].pt.cxx // covariances of px and py
-           << " " << prTracks[i].pt.cxy
-           << " " << prTracks[i].pt.cyy
-           << " " << prTracks[i].pos.x  // transverse location at IP
+           << " " << prTracks[i].p.y << " " << prTracks[i].p.z << " "
+           << prTracks[i].pt.cxx // covariances of px and py
+           << " " << prTracks[i].pt.cxy << " " << prTracks[i].pt.cyy << " "
+           << prTracks[i].pos.x // transverse location at IP
            << " " << prTracks[i].pos.y;
-
-    file << endl;
+      file << endl;
+      std::cerr << " " << prTracks[i].p.x // momentum components
+                << " " << prTracks[i].p.y << " " << prTracks[i].p.z << " "
+                << prTracks[i].pt.cxx // covariances of px and py
+                << " " << prTracks[i].pt.cxy << " " << prTracks[i].pt.cyy <<
+" "
+                << prTracks[i].pos.x // transverse location at IP
+                << " " << prTracks[i].pos.y;
+      std::cerr << endl;
+    }
   }
-  else
-    file << " -1" << endl;
+  else file << " -1" << endl;
 #endif
-    
-}
+  */
 
+  // Add our new info to the event
+  // ev.put(std::move(outputPrs), "one");
+}

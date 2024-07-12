@@ -1,0 +1,10 @@
+*/.vscode
+*.root
+*.pyc
+*crabConfig.py
+*targDir.txt
+*TestFs.txt
+ProtonReco/output/*
+ProtonReco/error/*
+ProtonReco/log/*
+*/.idea/*
