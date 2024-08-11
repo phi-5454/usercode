@@ -1,8 +1,19 @@
-executable            = run_reco.sh
-arguments             = $(input_dir) ../intermediate/$(input_dir)  $(ClusterId) $(ProcId)
-output                = ../output/$(input_dir).out
-error                 = ../error/$(input_dir).err
-log                   = ../log/$(input_dir)_condor.log
-requirements = (OpSysAndVer =?= "CentOS7")
-RequestCpus = 1
-queue input_dir from ../TestFs.txt
+Proxy_path = /afs/cern.ch/user/y/yelberke/private/cert
+executable            = reco_wrap.sh
+arguments             = $(input_dir) /eos/user/y/yelberke/intermediate_prot/$(input_dir) $(Proxy_path)
+#output                = ../output/$(input_dir).out
+#error                 = ../error/$(input_dir).err
+
+output                = ../output/$(ProcId).out
+error                 = ../error/$(ProcId).err
+
+log                   = ../log/$(ProcId)_condor.log
+
+transfer_input_files  = ./run_reco.sh
+#+PreCmd               = "prepare_slc6.sh"
+
+#MY.WantOS = "el7"
+#requirements = (OpSysAndVer =?= "CentOS7")
+RequestCpus = 8
+
+queue input_dir from TOTEM21.txt

@@ -75,46 +75,44 @@ void ProtonProducer::beginJob() {
   outT->Branch("Run", &run_id, "Run/i");
   outT->Branch("EventNum", &event_id, "EventNum/l");
 
-  /*
   // (IP) Momentum
-  outT->Branch("pr_px_a", &prTrks_out[0].p.x, "pr_px_a/F");
-  outT->Branch("pr_px_b", &prTrks_out[1].p.x, "pr_px_b/F");
+  outT->Branch("pr_px_a", &prTrks_out[0].p.x, "pr_px_a/D");
+  outT->Branch("pr_px_b", &prTrks_out[1].p.x, "pr_px_b/D");
 
-  outT->Branch("pr_py_a", &prTrks_out[0].p.y, "pr_py_a/F");
-  outT->Branch("pr_py_b", &prTrks_out[1].p.y, "pr_py_b/F");
+  outT->Branch("pr_py_a", &prTrks_out[0].p.y, "pr_py_a/D");
+  outT->Branch("pr_py_b", &prTrks_out[1].p.y, "pr_py_b/D");
 
-  outT->Branch("pr_pz_a", &prTrks_out[0].p.z, "pr_pz_a/F");
-  outT->Branch("pr_pz_b", &prTrks_out[1].p.z, "pr_pz_b/F");
+  outT->Branch("pr_pz_a", &prTrks_out[0].p.z, "pr_pz_a/D");
+  outT->Branch("pr_pz_b", &prTrks_out[1].p.z, "pr_pz_b/D");
   // No covariance values found for Vector3
-*/
 
   // (IP) Transverse momentum
-  outT->Branch("pr_ptx_a", &prTrks_out[0].pt.x, "pr_ptx_a/F");
-  outT->Branch("pr_ptx_b", &prTrks_out[1].pt.x, "pr_ptx_b/F");
+  outT->Branch("pr_ptx_a", &prTrks_out[0].pt.x, "pr_ptx_a/D");
+  outT->Branch("pr_ptx_b", &prTrks_out[1].pt.x, "pr_ptx_b/D");
 
-  outT->Branch("pr_pty_a", &prTrks_out[0].pt.y, "pr_pty_a/F");
-  outT->Branch("pr_pty_b", &prTrks_out[1].pt.y, "pr_pty_b/F");
+  outT->Branch("pr_pty_a", &prTrks_out[0].pt.y, "pr_pty_a/D");
+  outT->Branch("pr_pty_b", &prTrks_out[1].pt.y, "pr_pty_b/D");
 
   // Errors in transverse momentum
-  outT->Branch("pr_ptx_sigma_a", &prTrks_out[0].pt.cxx, "pr_ptx_sigma_a/F");
-  outT->Branch("pr_ptx_sigma_b", &prTrks_out[1].pt.cxx, "pr_ptx_sigma_b/F");
+  outT->Branch("pr_ptx_sigma_a", &prTrks_out[0].pt.cxx, "pr_ptx_sigma_a/D");
+  outT->Branch("pr_ptx_sigma_b", &prTrks_out[1].pt.cxx, "pr_ptx_sigma_b/D");
 
-  outT->Branch("pr_pty_sigma_a", &prTrks_out[0].pt.cyy, "pr_pty_sigma_a/F");
-  outT->Branch("pr_pty_sigma_b", &prTrks_out[1].pt.cyy, "pr_pty_sigma_b/F");
+  outT->Branch("pr_pty_sigma_a", &prTrks_out[0].pt.cyy, "pr_pty_sigma_a/D");
+  outT->Branch("pr_pty_sigma_b", &prTrks_out[1].pt.cyy, "pr_pty_sigma_b/D");
 
   // (IP) Positions
-  outT->Branch("pr_posx_a", &prTrks_out[0].pos.x, "pr_posx_a/F");
-  outT->Branch("pr_posx_b", &prTrks_out[1].pos.x, "pr_posx_b/F");
+  outT->Branch("pr_posx_a", &prTrks_out[0].pos.x, "pr_posx_a/D");
+  outT->Branch("pr_posx_b", &prTrks_out[1].pos.x, "pr_posx_b/D");
 
-  outT->Branch("pr_posy_a", &prTrks_out[0].pos.y, "pr_posy_a/F");
-  outT->Branch("pr_posy_b", &prTrks_out[1].pos.y, "pr_posy_b/F");
+  outT->Branch("pr_posy_a", &prTrks_out[0].pos.y, "pr_posy_a/D");
+  outT->Branch("pr_posy_b", &prTrks_out[1].pos.y, "pr_posy_b/D");
 
   // Errors in position (IP)
-  outT->Branch("pr_posx_sigma_a", &prTrks_out[0].pos.cxx, "pr_posx_sigma_a/F");
-  outT->Branch("pr_posx_sigma_b", &prTrks_out[1].pos.cxx, "pr_posx_sigma_b/F");
+  outT->Branch("pr_posx_sigma_a", &prTrks_out[0].pos.cxx, "pr_posx_sigma_a/D");
+  outT->Branch("pr_posx_sigma_b", &prTrks_out[1].pos.cxx, "pr_posx_sigma_b/D");
 
-  outT->Branch("pr_posy_sigma_a", &prTrks_out[0].pos.cyy, "pr_posy_sigma_a/F");
-  outT->Branch("pr_posy_sigma_b", &prTrks_out[1].pos.cyy, "pr_posy_sigma_b/F");
+  outT->Branch("pr_posy_sigma_a", &prTrks_out[0].pos.cyy, "pr_posy_sigma_a/D");
+  outT->Branch("pr_posy_sigma_b", &prTrks_out[1].pos.cyy, "pr_posy_sigma_b/D");
 
   //
 
@@ -257,10 +255,11 @@ void ProtonProducer::produce(edm::Event &ev, const edm::EventSetup &es) {
 
   auto outputPrs = std::make_unique<std::vector<PrTrack>>();
   for (auto &&pr : prTracks) {
-    auto pt = sqrt(pr.pt.x * pr.pt.x + pr.pt.y * pr.pt.y);
-    // TODO: Rigor. Uncertainty likely doesn't transform as euclidean distance
-    // does
-    auto ptu = sqrt(pr.pt.cxx * pr.pt.cxx + pr.pt.cyy * pr.pt.cyy);
+
+    // auto pt = sqrt(pr.pt.x * pr.pt.x + pr.pt.y * pr.pt.y);
+    //  TODO: Rigor. Uncertainty likely doesn't transform as euclidean distance
+    //  does
+    // auto ptu = sqrt(pr.pt.cxx * pr.pt.cxx + pr.pt.cyy * pr.pt.cyy);
 
     // Use covariances for uncertainties
     // outputPrs->push_back(CTPPSLocalTrackLite(-1, pr.pos.x, pr.pos.cxx,
@@ -272,10 +271,33 @@ void ProtonProducer::produce(edm::Event &ev, const edm::EventSetup &es) {
   if (prTracks.size() > 0) {
     event_id = ev.id().event();
     run_id = ev.id().run();
-    prTrks_out = prTracks;
+
+    // Try to make sure no memory is moved, only copied
+    // prTrks_out = prTrks;
+    for (int i = 0; i < 2; i++) {
+      prTrks_out[i].p = prTracks[i].p;
+      prTrks_out[i].pt = prTracks[i].pt;
+      prTrks_out[i].pos = prTracks[i].pos;
+    }
+
     // Save output tree
     outT->Fill();
   }
+
+  /*
+  std::cerr << "AAA\n";
+  if (prTracks.size() > 0) {
+    for (int i = 0; i < 2; i++) {
+      std::cerr << " " << prTracks[i].p.x // momentum components
+                << " " << prTracks[i].p.y << " " << prTracks[i].p.z << " "
+                << prTracks[i].pt.cxx // covariances of px and py
+                << " " << prTracks[i].pt.cxy << " " << prTracks[i].pt.cyy << " "
+                << prTracks[i].pos.x // transverse location at IP
+                << " " << prTracks[i].pos.y;
+      std::cerr << endl;
+    }
+  }
+  */
 
   // FOR NOW, WRITING OUT RECONSTRUCTED PROTON KINEMATICS TO out.dat.gz
   // std::cerr << "SMTH";
